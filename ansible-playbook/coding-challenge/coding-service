@@ -1,0 +1,18 @@
+[Unit]
+Description=Python Web Application Container
+After=network.target
+
+[Service]
+Type=forking
+
+ExecStart=/home/ubuntu/coding-challenge/startup.sh
+#ExecStop=/home/ubuntu/coding-challenge/shutdown.sh
+
+User=root
+Group=root
+RestartSec=10
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+

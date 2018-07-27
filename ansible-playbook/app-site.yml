@@ -1,0 +1,64 @@
+- hosts: app-servers
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  gather_facts: False
+  pre_tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      register: output
+      changed_when: output.stdout != ""
+    - setup: # aka gather_facts
+
+
+  tasks:
+  - name: update all packages
+    apt:
+      update_cache: yes
+
+  - name: ensure a list of packages installed
+    apt:
+      name: "{{ packages }}"
+    vars:
+      packages:
+      - python
+      - python-pip
+      - python-apt
+  
+  - name: install flask package
+    command: pip install flask
+
+  - name: copy the directory
+    copy:
+      src: coding-challenge
+      dest: /home/ubuntu/
+      directory_mode: yes
+
+  - name: copy the service file
+    copy:
+      src: /home/ubuntu/coding-challenge/coding-service
+      dest: /etc/systemd/system/coding.service
+      remote_src: yes
+      mode: 0775
+
+  - name: Fix the  permissions
+    shell: 'chmod +x /home/ubuntu/coding-challenge/app.py'
+
+  - name: Fix the  permissions for shell
+    shell: 'chmod +x /home/ubuntu/coding-challenge/startup.sh'
+  
+#  - name: Start application
+#    shell: nohup python /home/ubuntu/coding-challenge/app.py </dev/null > /dev/null 2>&1 &
+#    register: result
+#  - debug: var=result
+ 
+  - name: starting the service
+    service:
+      name: coding.service
+      state: started 
+      enabled: yes
+  
+  - name: start port
+    wait_for:
+      port: 5000
+      state: started  
